@@ -1,0 +1,61 @@
+ws = _{ " " | "\t" | "\n" }
+
+WHITESPACE = _{ ws }
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+id = { ASCII_ALPHA_LOWER ~ ("_" | ASCII_ALPHANUMERIC)* }
+
+sample_input = { "S" ~ ("a" ~ ("m" ~ ("p" ~ ("l" ~ ("e")?)?)?)?)? }
+envelope_input = { "E" ~ ("n" ~ ("v" ~ ("e" ~ ("l" ~ ("o" ~ ("p" ~ ("e")?)?)?)?)?)?)? }
+pattern_input = { "P" ~ ("a" ~ ("t" ~ ("t" ~ ("e" ~ ("r" ~ ("n")?)?)?)?)?)? }
+
+number = @{
+    ("+" | "-")? ~ (
+        (ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT*)?)
+        | ("." ~ ASCII_DIGIT+)
+    )
+}
+
+factor = ${ number ~ "f" }
+
+params = { id ~ ("," ~ id)* ~ ","? }
+
+function = { "fn" ~ "(" ~ params? ~ ")" ~ expr }
+
+typename = { "sample" | "envelope" | "pattern" | "number" | "factor" }
+
+expr_0 = _{
+    | factor
+    | number
+    | sample_input
+    | envelope_input
+    | pattern_input
+    | function
+    | id
+    | block
+    | ("(" ~ expr ~ ")")
+}
+
+coercion = { expr_0 ~ "as" ~ typename }
+
+expr_1 = _{ coercion | expr_0 }
+
+operation = _{ sequence | add | subtract | multiply }
+    sequence = { "++" }
+    add      = { "+" }
+    subtract = { "-" }
+    multiply = { "*" }
+
+expr = _{ expr_1 ~ (operation ~ expr_1)* }
+
+expression = _{ SOI ~ expr ~ EOI }
+
+stmt = _{ def | ret }
+    def = { "let" ~ id ~ "=" ~ expr ~ ";" }
+    ret = { "return" ~ expr ~ ";" }
+
+statement = _{ SOI ~ stmt ~ EOI }
+
+stmts = { stmt* }
+
+block = { "{" ~ stmts ~ expr? ~ "}" }
