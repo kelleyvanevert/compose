@@ -5,9 +5,15 @@ COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
 id = @{ ASCII_ALPHA_LOWER ~ ("_" | ASCII_ALPHANUMERIC)* }
 
-sample_input = @{ "S" ~ ("a" ~ ("m" ~ ("p" ~ ("l" ~ ("e")?)?)?)?)? }
-envelope_input = @{ "E" ~ ("n" ~ ("v" ~ ("e" ~ ("l" ~ ("o" ~ ("p" ~ ("e")?)?)?)?)?)?)? }
-pattern_input = @{ "P" ~ ("a" ~ ("t" ~ ("t" ~ ("e" ~ ("r" ~ ("n")?)?)?)?)?)? }
+save_id = @{ (ASCII_HEX_DIGIT | "_")+ }
+
+save_input = ${ "@" ~ save_id }
+
+kw_sample = @{ "S" ~ ("a" ~ ("m" ~ ("p" ~ ("l" ~ ("e")?)?)?)?)? }
+kw_envelope = @{ "E" ~ ("n" ~ ("v" ~ ("e" ~ ("l" ~ ("o" ~ ("p" ~ ("e")?)?)?)?)?)?)? }
+kw_pattern = @{ "P" ~ ("a" ~ ("t" ~ ("t" ~ ("e" ~ ("r" ~ ("n")?)?)?)?)?)? }
+
+input = ${ (kw_sample | kw_envelope | kw_pattern) ~ save_input? }
 
 number = @{
     | (ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT*)?)
@@ -25,9 +31,7 @@ typename = { "sample" | "envelope" | "pattern" | "number" | "factor" }
 primary = _{
     | factor
     | number
-    | sample_input
-    | envelope_input
-    | pattern_input
+    | input
     | function
     | id
     | block
@@ -35,7 +39,8 @@ primary = _{
 }
 
 expr         =   { prefix* ~ primary ~ postfix* ~ (infix ~ prefix* ~ primary ~ postfix* )* }
-    infix    =  _{ add | sub | mul | div | pow }
+    infix    =  _{ seq | add | sub | mul | div | pow }
+      seq    =   { "++" }
       add    =   { "+" }
       sub    =   { "-" }
       mul    =   { "*" }
@@ -58,5 +63,4 @@ stmts = { stmt* }
 block = { "{" ~ stmts ~ expr? ~ "}" }
 
 entry_expression = _{ SOI ~ expr ~ EOI }
-
 entry_statement = _{ SOI ~ stmt ~ EOI }
